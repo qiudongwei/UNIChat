@@ -73,6 +73,7 @@ export default {
             padding: 5px 0;
             border-radius: 5px;
             margin-bottom: 3px;
+            border-bottom: 1px solid #dfdfdf;
             &:hover {
                 background-color: #F1F1F1;
             }

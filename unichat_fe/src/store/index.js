@@ -8,7 +8,7 @@ Vue.use(Vuex)
 
 const store = new Vuex.Store({
     state: {
-        user: '当前用户',
+        user: window.sessionStorage.user ? JSON.parse(window.sessionStorage.user) : null,
         msgCache: null // 缓存当前发送的信息
     },
 

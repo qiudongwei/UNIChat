@@ -11,9 +11,15 @@ const ChatRoomModule = () => import(/* webpackChunkName: "chat" */ '@/view/Chat/
 const FriendListModule = () => import(/* webpackChunkName: "friend" */ '@/view/Friend/List')
 const FriendDetailModule = () => import(/* webpackChunkName: "friend" */ '@/view/Friend/Detail')
 
+const LoginModule = () => import(/* webpackChunkName: "User" */ '@/view/User/Login')
+
 const routes = [{
     path: '',
     redirect: '/chat'
+},{
+    path: '/login',
+    component: LoginModule,
+    name: 'LOGIN'
 },{
     path: '/chat',
     component: SubRouteView,
@@ -65,17 +71,22 @@ const router = new VueRouter({
  */
 router.beforeEach(async (to, from, next) => {
     const vm = router.app // vue实例
-    if (!vm._isMounted) { // 首次访问
-        const res = await vm.$post('//localhost:8080/user/login', {
-            uid: '登录用户'
+    const user = window.sessionStorage.user ? JSON.parse(window.sessionStorage.user) : null
+    if (!vm._isMounted && !user && to.name !== 'LOGIN') { // 首次访问且未登录
+        next({
+            path: '/login'
         })
-        if(res.result === 1) {
-            const data = res.data
-            vm.$store.dispatch('login', {
-                user: data.uid,
-                timestamp: new Date().getTime()
-            })
-        }
+        return
+        // const res = await vm.$post('//localhost:8080/user/login', {
+        //     uid: '登录用户'
+        // })
+        // if(res.result === 1) {
+        //     const data = res.data
+        //     vm.$store.dispatch('login', {
+        //         user: data.uid,
+        //         timestamp: new Date().getTime()
+        //     })
+        // }
     }
 
     const title = to.meta.title || 'UNIChat'

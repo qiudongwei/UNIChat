@@ -1,10 +1,10 @@
 <docs>
-    登录/注册
+    主页
 </docs>
 
 <template>
     <div id="app">
-        <div class="container">
+        <div class="container" v-if="user">
             <section class="top-bar">
                 <TopBar />
             </section>
@@ -17,6 +17,9 @@
                 </div>
             </section>
         </div>
+        <div class="container" v-else>
+            <router-view class='view'></router-view>
+        </div>
     </div>
 </template>
 
@@ -27,6 +30,11 @@ export default {
     components: {
         TopBar,
         SideBar
+    },
+    computed: {
+        user () {
+            return this.$store.getters.user
+        }
     },
     methods: {
         async login () {
