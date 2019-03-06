@@ -69,7 +69,7 @@ const router = new VueRouter({
 /**
  * 设置beforeEach钩子用于登录操作、title设置
  */
-router.beforeEach(async (to, from, next) => {
+router.beforeEach((to, from, next) => {
     const vm = router.app // vue实例
     const user = window.sessionStorage.user ? JSON.parse(window.sessionStorage.user) : null
     if (!vm._isMounted && !user && to.name !== 'LOGIN') { // 首次访问且未登录
