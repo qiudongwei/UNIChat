@@ -41,7 +41,7 @@ export default {
     },
     computed: {
         user () {
-            return this.$store.getters.user
+            return this.$store.getters.user.username
         },
         name () {
             return (this.type === 1 ? this.user : this.msgObj.name) || 'Null'

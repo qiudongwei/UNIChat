@@ -4,31 +4,21 @@
 <template>
     <div>
         <div class="chat-list">
-            <router-link class="chat-list-item" :class="uid === 'Wilton' ? 'active' : '' " :to="{name: 'CHAT_ROOM', params: {uid: 'Wilton'}}">
+            <router-link class="chat-list-item" :class="uid === '6ed1ca42f65b2ec4d17ad2f7a90a9587' ? 'active' : '' " :to="{name: 'CHAT_ROOM', params: {uid: '6ed1ca42f65b2ec4d17ad2f7a90a9587'}}">
                 <div class="chat-list-wraper">
                     <div class="chat-list-avatar">W</div>
                     <div class="chat-list-info">
-                        <p class="chat-list-name">Wilton</p>
+                        <p class="chat-list-name">wilton</p>
                         <p class="chat-list-msg">hell world!</p>
                     </div>
                     <span class="chat-list-time">02-10</span>
                 </div>
             </router-link>
-            <router-link class="chat-list-item" :class="uid === 'bikaqiu' ? 'active' : '' " :to="{name: 'CHAT_ROOM', params: {uid: 'bikaqiu'}}">
+            <router-link class="chat-list-item" :class="uid === 'd0177d5f5d938bbbb5c6dcd9917bc565' ? 'active' : '' " :to="{name: 'CHAT_ROOM', params: {uid: 'd0177d5f5d938bbbb5c6dcd9917bc565'}}">
                 <div class="chat-list-wraper">
                     <div class="chat-list-avatar">哔</div>
                     <div class="chat-list-info">
                         <p class="chat-list-name">哔咖丘</p>
-                        <p class="chat-list-msg">hell world!</p>
-                    </div>
-                    <span class="chat-list-time">13:14</span>
-                </div>
-            </router-link>
-            <router-link class="chat-list-item" :class="uid === 'Qdw' ? 'active' : '' " :to="{name: 'CHAT_ROOM', params: {uid: 'Qdw'}}">
-                <div class="chat-list-wraper">
-                    <div class="chat-list-avatar">Q</div>
-                    <div class="chat-list-info">
-                        <p class="chat-list-name">Qdw</p>
                         <p class="chat-list-msg">hell world!</p>
                     </div>
                     <span class="chat-list-time">13:14</span>
@@ -39,7 +29,11 @@
             <div class="chat-room-placeholder" v-if="isChatList">
                 那个。。。一起摸鱼吗？哈...？
             </div>
-            <router-view class='view' v-else></router-view>
+            <template v-else>
+                <keep-alive :exclude=/nokeep/i>
+                    <router-view class='view'></router-view>
+                </keep-alive>
+            </template>
         </div>
     </div>
 </template>

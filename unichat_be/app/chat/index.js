@@ -3,6 +3,7 @@
  */
 
 const WebSocket = require('ws')
+const Utils = require('../../utils')
 
 const createChatSocket = function (conf) {
     const { path, server} = conf
@@ -11,14 +12,21 @@ const createChatSocket = function (conf) {
         server
     })
 
+    const sockets = {}
+
     singleWss.on('connection', (socket, req) => {
+        const uid = parseUrlParams(req.url, 'uid')
+        sockets[uid] = socket
         if(!/chat\S+$/.test(req.url)) { // 非法连接
             socket.close(4000, 'Invalid URL')
         }
-        console.log(req.url)
-        socket.on('message', (msg) => {
-            console.log(msg)
-            socket.send('收到一对一消息...')
+        socket.on('message', (data) => {
+            data = JSON.parse(data)
+            userInfo = Utils.getUserInfo(data.from)
+            Object.assign(data, {
+                name: userInfo.username
+            })
+            sockets[data.to].send(JSON.stringify(data))
         })
     })
 
@@ -37,6 +45,13 @@ const createChatSocket = function (conf) {
     //         socket.send('收到群消息...')
     //     })
     // })
+}
+
+const parseUrlParams = function (url, name) {
+    const reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i"); 
+    const params = url.split('?').reverse()[0]
+    const r = params.match(reg)
+    return r ? r[2] : null
 }
 
 module.exports = createChatSocket

@@ -27,12 +27,13 @@ export default {
     async login () {
       if (!this.nickName) return
       const res = await this.$post('//localhost:8080/user/login', {
-          uid: this.nickName
+          username: this.nickName
       })
       if(res.result === 1) {
           const data = res.data
           this.$store.dispatch('login', {
-              user: data.uid,
+              uid: data.id,
+              username: data.name,
               timestamp: new Date().getTime()
           })
           this.$router.push({name: 'CHAT_LIST'})

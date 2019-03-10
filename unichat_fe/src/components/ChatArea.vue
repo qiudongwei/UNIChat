@@ -21,43 +21,46 @@ export default {
     },
     data () {
         return {
-            messages: [{
-                type: -1,
-                info: {
-                    name: 'Wilton',
-                    datetime: 1551425672525,
-                    message: '摸鱼吗？'
-                }
-            },{
-                type: 1,
-                info: {
-                    datetime: 1551435672323,
-                    message: '是呢！一起吗？'
-                }
-            }]
+            messages: []
         }
     },
     computed: {
+        uid () {
+            return this.$route.params.uid
+        },
+        user () {
+            return this.$store.getters.user.uid
+        },
+        receivedMsg () {
+            return this.$store.getters.msgReceiveCache.filter(each => 
+                [this.uid, this.user].includes(each.from)
+            ).map(each => {
+                return {
+                    type: each.type,
+                    info: {
+                        datetime: each.datetime,
+                        name: each.name,
+                        message: each.message
+                    }
+                }
+            })
+        },
         msgs () {
+            const messages = R.concat(this.messages)(this.receivedMsg)
             const getDateTime = R.compose(R.prop('datetime'), R.prop('info'))
             // 按照datetime属性排序
-            return R.sortBy(getDateTime)(this.messages)
+            return R.sortBy(getDateTime)(messages)
         },
-        msgCache () {
-            return this.$store.getters.msgCache
+        msgSendCache () {
+            return this.$store.getters.msgSendCache
         }
     },
     created () {
         this.$bus.$on('send-message', () => {
             this.messages = R.append({
                 type: 1,
-                info: R.clone(this.msgCache)
+                info: R.clone(this.msgSendCache)
             })(this.messages)
-            // this.messages.push({
-            //     type: 1,
-            //     info: R.clone(this.msgCache)
-            // })
-            console.log(this.messages)
         })
     }
 }

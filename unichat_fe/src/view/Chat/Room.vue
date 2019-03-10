@@ -6,7 +6,7 @@
         <div class="room-head">
             <div class="room-head-avatar">W</div>
             <div class="room-head-info">
-                <p class="room-head-name">{{ nickName }}</p>
+                <p class="room-head-name">{{ frinedName }}</p>
                 <div class="room-head-status active">在线</div>
             </div>
         </div>
@@ -36,10 +36,39 @@ export default {
         ChatArea
     },
 
+    data () {
+        return {
+            frinedName: null
+        }
+    },
+
     computed: {
-        nickName () {
+
+        uid () {
             return this.$route.params.uid
         }
+    },
+
+    watch: {
+        uid () {
+            this.getUserInfo()
+        }
+    },
+
+    methods: {
+        async getUserInfo () {
+            const frined = await this.$post('//localhost:8080/user/get_info', {
+                uid: this.uid
+            })
+
+            if(frined.result === 1) {
+                this.frinedName = frined.data.username
+            }
+        }
+    },
+
+    async activated () {
+        this.getUserInfo()
     }
 }
 </script>
