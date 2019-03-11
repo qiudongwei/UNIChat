@@ -54,8 +54,15 @@ const routes = [{
         component: FriendListModule,
     },{
         path: 'detail/:uid',
-        name: 'FRIEND_DETAIL',
-        component: FriendDetailModule,
+        component: FriendListModule,
+        children: [{
+            path: '',
+            name: 'FRIEND_DETAIL',
+            component: FriendDetailModule,
+            meta: {
+                title: '一条咸鱼'
+            }
+        }]
     }]
 }]
 

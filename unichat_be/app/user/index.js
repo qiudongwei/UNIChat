@@ -20,14 +20,9 @@ router.post('/login', (req, res) => {
 
 router.post('/get_info', (req, res) => {
     const postData = Object.assign({}, req.body)
-    // const info = fs.readFileSync(USER_FILE, {encoding: 'utf-8'})
-    // const data = JSON.parse(info)
-    // const users = Object.keys(data)
-    // const ids = users.map(each => data[each])
-    // const index = ids.findIndex(each => each === postData.uid)
     let rst = null
     const data = Utils.getUserInfo(postData.uid)
-    if(data === -1) {
+    if(!data) {
         rst = {
             result: 0,
             code: 101,
@@ -62,7 +57,5 @@ const doLogin  = function (value) {
     writeStream.end()
     return { name, id }
 }
-
-doLogin({wilton:'dhjka789dshjkh'})
 
 module.exports = router
