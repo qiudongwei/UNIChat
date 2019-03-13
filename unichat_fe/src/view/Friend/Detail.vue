@@ -28,6 +28,7 @@ export default {
     },
     watch: {
         uid () {
+            console.log('detail')
             this.getUserInfo()
         }
     },

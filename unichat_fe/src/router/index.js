@@ -1,8 +1,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 
-import SubRouteView from '@/components/SubRouteView'
-
 // chat component
 const ChatListModule = () => import(/* webpackChunkName: "chat" */ '@/view/Chat/List')
 const ChatRoomModule = () => import(/* webpackChunkName: "chat" */ '@/view/Chat/Room')
@@ -22,47 +20,34 @@ const routes = [{
     name: 'LOGIN'
 },{
     path: '/chat',
-    component: SubRouteView,
+    component: ChatListModule,
+    name: 'CHAT_LIST',
+    meta: {
+        title: '待摸鱼'
+    },
     children: [{
-        path: '',
-        name: 'CHAT_LIST',
-        component: ChatListModule,
-        meta: {
-            title: '待摸鱼'
-        }
-    },{
         path: 'room/:uid',
-        component: ChatListModule, // 渲染在List的Route-View中
-        children: [{
-            path: '',
-            name: 'CHAT_ROOM',
-            component: ChatRoomModule,
-            meta: {
-                title: '摸鱼中'
-            }
-        }]
+        name: 'CHAT_ROOM',
+        component: ChatRoomModule,
+        meta: {
+            title: '摸鱼中'
+        }
     }]
 },{
     path: '/friend',
-    component: SubRouteView,
+    name: 'FRIEND_LIST',
+    component: FriendListModule,
     meta: {
         title: '咸鱼们'
     },
     children: [{
-        path: '',
-        name: 'FRIEND_LIST',
-        component: FriendListModule,
-    },{
         path: 'detail/:uid',
         component: FriendListModule,
-        children: [{
-            path: '',
-            name: 'FRIEND_DETAIL',
-            component: FriendDetailModule,
-            meta: {
-                title: '一条咸鱼'
-            }
-        }]
+        name: 'FRIEND_DETAIL',
+        component: FriendDetailModule,
+        meta: {
+            title: '一条咸鱼'
+        }
     }]
 }]
 

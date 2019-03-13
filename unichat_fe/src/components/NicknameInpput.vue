@@ -6,12 +6,12 @@
   <div class="input-wraper">
     <input type="text" ref="input" class="common-input"
          v-model="model"
-         v-bind="$attrs"
-         @blur="blur">
+         v-bind="$attrs">
   </div>
 </template>
 
 <script>
+import { debounce } from '../js/utils'
 export default {
   props: {
     value: null
@@ -24,13 +24,16 @@ export default {
 
       set (val) {
         this.$emit('input', val)
+        if(val) {
+          this.checkNickName()
+        }
       }
     }
   },
   methods: {
-    blur () {
+    checkNickName: debounce(function () {
       console.log(this.model)
-    }
+    }, 500)
   }
 }
 </script>

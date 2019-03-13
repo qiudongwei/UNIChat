@@ -69,6 +69,23 @@ export default {
 
     async activated () {
         this.getUserInfo()
+    },
+
+    beforeRouteLeave (to, from, next) {
+        console.log(from)
+        next()
+    },
+
+    saveChatRecord () {
+        alert(11111)
+    },
+
+    activated() {
+        console.log(22)
+        window.addEventListener('beforeunload', this.saveChatRecord)
+    },
+    deactivated() {
+        window.removeEventListener('beforeunload', this.saveChatRecord)
     }
 }
 </script>
