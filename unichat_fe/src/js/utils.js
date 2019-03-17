@@ -4,7 +4,7 @@
  * @param {Number} delay 防抖时间
  * @param {Func} before 防抖钩子：触发前
  */
-export const debounce = (func, delay, before) => {
+export function debounce (func, delay, before) {
     let timer = null
     delay = delay || 300
     return function (arg) {
@@ -17,4 +17,8 @@ export const debounce = (func, delay, before) => {
             timer = null
         }, delay)
     }
+}
+
+export function getAvatar (uname) {
+    return uname ? uname[0] : 'U'
 }

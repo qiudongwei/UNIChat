@@ -24,6 +24,7 @@
 </template>
 
 <script>
+import { getAvatar } from '@/js/utils'
 export default {
     props: {
         type: {
@@ -56,7 +57,7 @@ export default {
             return new Date(this.msgObj.datetime).toLocaleTimeString()
         },
         avatar () {
-            return this.name ? this.name[0] : 'U'
+            return getAvatar(this.name)
         }
     }
 }

@@ -12,6 +12,7 @@ const store = new Vuex.Store({
         user: window.sessionStorage.user ? JSON.parse(window.sessionStorage.user) : null,
         msgSendCache: null, // 缓存当前发送的信息
         msgReceiveCache: [], // 缓存当前接受的信息
+        chat: null, // 当前聊天好友ID
     },
 
     mutations: {
@@ -24,7 +25,10 @@ const store = new Vuex.Store({
         },
         setMsgReceiveCache (state, msg = null) {
             state.msgReceiveCache = R.append(msg)(state.msgReceiveCache)
-            console.log(state.msgReceiveCache)
+        },
+        setChat (state, chat) {
+            console.log(chat)
+            state.chat = chat
         }
     },
 
@@ -44,7 +48,8 @@ const store = new Vuex.Store({
     getters: {
         user: state => state.user,
         msgSendCache: state => state.msgSendCache,
-        msgReceiveCache: state => state.msgReceiveCache
+        msgReceiveCache: state => state.msgReceiveCache,
+        chat: state => state.chat
     }
 })
 

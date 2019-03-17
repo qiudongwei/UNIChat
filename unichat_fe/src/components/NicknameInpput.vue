@@ -32,7 +32,7 @@ export default {
   },
   methods: {
     checkNickName: debounce(function () {
-      console.log(this.model)
+      console.log('Checking unique NickName: ',this.model)
     }, 500)
   }
 }

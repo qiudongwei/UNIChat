@@ -4,7 +4,7 @@
 <template>
     <div class="room-wraper">
         <div class="room-head">
-            <div class="room-head-avatar">W</div>
+            <div class="room-head-avatar">{{ avatar }}</div>
             <div class="room-head-info">
                 <p class="room-head-name">{{ frinedName }}</p>
                 <div class="room-head-status active">在线</div>
@@ -28,6 +28,7 @@
 </template>
 
 <script>
+import { getAvatar } from '@/js/utils'
 import MessageArea from '@/components/MessageArea'
 import ChatArea from '@/components/ChatArea'
 export default {
@@ -46,6 +47,10 @@ export default {
 
         uid () {
             return this.$route.params.uid
+        },
+
+        avatar () {
+            return getAvatar && getAvatar(this.frinedName)
         }
     },
 
@@ -56,34 +61,51 @@ export default {
     },
 
     methods: {
-        async getUserInfo () {
+        async getUserInfo (uid) {
             const frined = await this.$post('//localhost:8080/user/get_info', {
-                uid: this.uid
+                uid: uid || this.uid
             })
+
+            if(uid) {
+                return frined
+            }
 
             if(frined.result === 1) {
                 this.frinedName = frined.data.username
             }
+        },
+        async updateChatList () {
+            const chat = {
+                uid: this.uid,
+                uname: this.frinedName
+            }
+            this.$store.commit('setChat', chat)
+        },
+        saveChatRecord () {
+            window.localStorage.setItem('name', 'qdw')
         }
     },
 
-    async activated () {
+    activated () {
         this.getUserInfo()
+        window.addEventListener('beforeunload', this.saveChatRecord)
+    },
+
+    beforeRouteEnter (to, from, next) {
+        if(from.name === 'FRIEND_DETAIL') {
+            next(vm => {
+                vm.updateChatList()
+            })
+        } else {
+            next()
+        }
     },
 
     beforeRouteLeave (to, from, next) {
-        console.log(from)
+        this.saveChatRecord()
         next()
     },
 
-    saveChatRecord () {
-        alert(11111)
-    },
-
-    activated() {
-        console.log(22)
-        window.addEventListener('beforeunload', this.saveChatRecord)
-    },
     deactivated() {
         window.removeEventListener('beforeunload', this.saveChatRecord)
     }

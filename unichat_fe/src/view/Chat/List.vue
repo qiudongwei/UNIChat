@@ -4,24 +4,14 @@
 <template>
     <div>
         <div class="chat-list">
-            <router-link class="chat-list-item" :class="uid === '6ed1ca42f65b2ec4d17ad2f7a90a9587' ? 'active' : '' " :to="{name: 'CHAT_ROOM', params: {uid: '6ed1ca42f65b2ec4d17ad2f7a90a9587'}}">
+            <router-link class="chat-list-item" v-for="(chat, index) in chats" :key="index" :class="uid === chat.uid ? 'active' : '' " :to="{name: 'CHAT_ROOM', params: {uid: chat.uid}}">
                 <div class="chat-list-wraper">
                     <div class="chat-list-avatar">W</div>
                     <div class="chat-list-info">
-                        <p class="chat-list-name">wilton</p>
-                        <p class="chat-list-msg">hell world!</p>
+                        <p class="chat-list-name">{{ chat.uname }}</p>
+                        <p class="chat-list-msg">{{ chat.latestMsg || '最新消息' }}</p>
                     </div>
-                    <span class="chat-list-time">02-10</span>
-                </div>
-            </router-link>
-            <router-link class="chat-list-item" :class="uid === 'd0177d5f5d938bbbb5c6dcd9917bc565' ? 'active' : '' " :to="{name: 'CHAT_ROOM', params: {uid: 'd0177d5f5d938bbbb5c6dcd9917bc565'}}">
-                <div class="chat-list-wraper">
-                    <div class="chat-list-avatar">哔</div>
-                    <div class="chat-list-info">
-                        <p class="chat-list-name">哔咖丘</p>
-                        <p class="chat-list-msg">hell world!</p>
-                    </div>
-                    <span class="chat-list-time">13:14</span>
+                    <span class="chat-list-time">{{ chat.latestTime || '最新时间' }}</span>
                 </div>
             </router-link>
         </div>
@@ -39,6 +29,7 @@
 </template>
 
 <script>
+import * as R from 'ramda'
 export default {
     computed: {
         uid () {
@@ -47,6 +38,15 @@ export default {
 
         isChatList () {
             return this.$route.name === 'CHAT_LIST'
+        },
+
+        chat () {
+            return this.$store.getters.chat
+        },
+
+        chats () {
+            const chat = this.chat ? [this.chat] : []
+            return R.concat(chat)([])
         }
     }
 }
