@@ -4,14 +4,14 @@
 <template>
     <div>
         <div class="chat-list">
-            <router-link class="chat-list-item" v-for="(chat, index) in chats" :key="index" :class="uid === chat.uid ? 'active' : '' " :to="{name: 'CHAT_ROOM', params: {uid: chat.uid}}">
+            <router-link class="chat-list-item" v-for="(chat, index) in chats" :key="index" :class="isActive(chat.uid) ? 'active' : '' " :to="{name: 'CHAT_ROOM', params: {uid: chat.uid}}">
                 <div class="chat-list-wraper">
-                    <div class="chat-list-avatar">W</div>
+                    <div class="chat-list-avatar">{{ getAvatar(chat.uname) }}</div>
                     <div class="chat-list-info">
                         <p class="chat-list-name">{{ chat.uname }}</p>
-                        <p class="chat-list-msg">{{ chat.latestMsg || '最新消息' }}</p>
+                        <p v-show="!isActive(chat.uid)" class="chat-list-msg">{{ chat.latestMsg || '最新消息' }}</p>
                     </div>
-                    <span class="chat-list-time">{{ chat.latestTime || '最新时间' }}</span>
+                    <span v-show="!isActive(chat.uid)" class="chat-list-time">{{ chat.latestTime || '最新时间' }}</span>
                 </div>
             </router-link>
         </div>
@@ -30,7 +30,13 @@
 
 <script>
 import * as R from 'ramda'
+import { getAvatar } from '@/js/utils'
 export default {
+    data () {
+        return {
+            chatList: null
+        }
+    },
     computed: {
         uid () {
             return this.$route.params.uid || ''
@@ -44,10 +50,50 @@ export default {
             return this.$store.getters.chat
         },
 
+        routeName () {
+            return this.$route.name
+        },
+
         chats () {
             const chat = this.chat ? [this.chat] : []
-            return R.concat(chat)([])
+            const chatList = this.chatList || []
+            return R.concat(chat)(chatList.map(each => {
+                const date = new Date(each.data.info.datetime)
+                return {
+                    uid: each.uid,
+                    uname: each.uname,
+                    latestMsg: each.data.info.message,
+                    latestTime: (Date.now() - each.data.info.datetime) > 24 * 12 * 60 * 60 * 100 ? date.toLocaleDateString() : date.toLocaleTimeString()
+                }
+            }))
         }
+    },
+
+    watch: {
+        routeName (curr, prev) {
+            if(prev === 'CHAT_ROOM') {
+                this.getChatList()
+            }
+        }
+    },
+
+    methods: {
+        isActive (uid) {
+            return this.uid === uid
+        },
+
+        getAvatar: getAvatar,
+
+        getChatList () {
+            this.chatList = this.$cache.getChatList('MESSAGE')
+        }
+    },
+
+    beforeRouteEnter (to, from, next) {
+        next(vm => {
+            vm.getChatList()
+            // vm.chatList = vm.$cache.getChatList('MESSAGE')
+        })
     }
 }
 </script>

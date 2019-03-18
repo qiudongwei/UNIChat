@@ -38,6 +38,15 @@ router.post('/get_info', (req, res) => {
     res.json(rst)
 })
 
+router.post('/get_friends', (req, res) => {
+    const friends = Utils.getFriendList()
+    res.json({
+        result: 1,
+        code: 100,
+        data: friends
+    })
+})
+
 const doLogin  = function (value) {
     const name = Object.keys(value)[0]
     const id = value[name]

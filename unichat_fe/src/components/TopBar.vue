@@ -6,11 +6,28 @@
     <div class="top-wraper">
         <div class="trademark">
             <div class="trademark-logo">UNI</div>
-            <p class="trademark-name">UNIChat</p>
+            <p class="trademark-name">{{ username }}</p>
         </div>
         <div class="search"></div>
     </div>
 </template>
+
+<script>
+export default {
+    data () {
+        return {
+            user: this.$store.getters.user
+        }
+    },
+
+    computed: {
+        username () {
+            return this.user && this.user.username
+        }
+    }
+}
+</script>
+
 
 <style lang="scss" scoped>
     .top-wraper {

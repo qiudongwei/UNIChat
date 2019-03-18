@@ -4,19 +4,11 @@
 <template>
     <div>
         <div class="chat-list">
-            <router-link class="chat-list-item" :class="uid === '6ed1ca42f65b2ec4d17ad2f7a90a9587' ? 'active' : '' " :to="{name: 'FRIEND_DETAIL', params: {uid: '6ed1ca42f65b2ec4d17ad2f7a90a9587'}}">
+            <router-link class="chat-list-item" v-for="(val, key, index) in friends" :key="index" :class="isActive(val) ? 'active' : '' " :to="{name: 'FRIEND_DETAIL', params: {uid: val}}">
                 <div class="chat-list-wraper">
-                    <div class="chat-list-avatar">W</div>
+                    <div class="chat-list-avatar">{{ getAvatar(key) }}</div>
                     <div class="chat-list-info">
-                        <p class="chat-list-name">wilton</p>
-                    </div>
-                </div>
-            </router-link>
-            <router-link class="chat-list-item" :class="uid === 'd0177d5f5d938bbbb5c6dcd9917bc565' ? 'active' : '' " :to="{name: 'FRIEND_DETAIL', params: {uid: 'd0177d5f5d938bbbb5c6dcd9917bc565'}}">
-                <div class="chat-list-wraper">
-                    <div class="chat-list-avatar">哔</div>
-                    <div class="chat-list-info">
-                        <p class="chat-list-name">哔咖丘</p>
+                        <p class="chat-list-name">{{ key }}</p>
                     </div>
                 </div>
             </router-link>
@@ -35,7 +27,13 @@
 </template>
 
 <script>
+import { getAvatar } from '@/js/utils'
 export default {
+    data () {
+        return {
+            friends: []
+        }
+    },
     computed: {
         uid () {
             return this.$route.params.uid || ''
@@ -44,6 +42,25 @@ export default {
         isFriendList () {
             return this.$route.name === 'FRIEND_LIST'
         }
+    },
+
+    methods: {
+        isActive (uid) {
+            return this.uid === uid
+        },
+
+        getAvatar: getAvatar,
+
+        async getFriendList () {
+            const data = await this.$post('//localhost:8080/user/get_friends')
+            if(data.result === 1) {
+                this.friends = data.data
+            }
+        }
+    },
+
+    created () {
+        this.getFriendList()
     }
 }
 </script>

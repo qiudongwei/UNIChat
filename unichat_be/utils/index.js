@@ -2,7 +2,7 @@ const fs = require('fs')
 
 const USER_FILE = `${process.cwd()}/data/user.json`
 
-export function getUserInfo (id) {
+function getUserInfo (id) {
   let userInfo = null
   const info = fs.readFileSync(USER_FILE, {encoding: 'utf-8'})
   const data = JSON.parse(info)
@@ -16,4 +16,15 @@ export function getUserInfo (id) {
     }
   }
   return userInfo
+}
+
+function getFriendList () {
+  const info = fs.readFileSync(USER_FILE, {encoding: 'utf-8'})
+  const data = JSON.parse(info)
+  return data
+}
+
+module.exports = {
+  getUserInfo,
+  getFriendList
 }

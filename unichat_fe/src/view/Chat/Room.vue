@@ -60,6 +60,13 @@ export default {
         }
     },
 
+    created () { // 页面刷新时从缓存中获取激活用户
+        const friend = this.$cache.getActiveUser()
+        if(friend) {
+            this.$store.commit('setChat', friend)
+        }
+    },
+
     methods: {
         async getUserInfo (uid) {
             const frined = await this.$post('//localhost:8080/user/get_info', {
@@ -74,40 +81,46 @@ export default {
                 this.frinedName = frined.data.username
             }
         },
-        async updateChatList () {
+        saveActiveUser () {
+            // 保存激活中的用户
             const chat = {
                 uid: this.uid,
                 uname: this.frinedName
             }
-            this.$store.commit('setChat', chat)
+            this.$cache.setActiveUser(chat)
+        },
+        clearActiveUser () {
+            this.$store.commit('setChat', null)
+            this.$cache.clearActiveUser()
         },
         saveChatRecord () {
-            window.localStorage.setItem('name', 'qdw')
+            const messages = this.$store.getters.messages || []
+            if(!messages.length) return
+            this.$cache.set(this.uid, {
+                name: this.frinedName,
+                records: messages
+            })
+        },
+        beforeunload () {
+            this.saveActiveUser()
+            this.saveChatRecord()
         }
     },
 
     activated () {
         this.getUserInfo()
-        window.addEventListener('beforeunload', this.saveChatRecord)
-    },
-
-    beforeRouteEnter (to, from, next) {
-        if(from.name === 'FRIEND_DETAIL') {
-            next(vm => {
-                vm.updateChatList()
-            })
-        } else {
-            next()
-        }
+        window.addEventListener('beforeunload', this.beforeunload)
     },
 
     beforeRouteLeave (to, from, next) {
+        this.clearActiveUser()
         this.saveChatRecord()
+        this.$store.commit('setMessage', null)
         next()
     },
 
     deactivated() {
-        window.removeEventListener('beforeunload', this.saveChatRecord)
+        window.removeEventListener('beforeunload', this.beforeunload)
     }
 }
 </script>

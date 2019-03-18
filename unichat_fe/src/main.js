@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import './js/http'
 import './js/eventbus'
+import './cache'
 import router from './router'
 import store from './store'
 import App from './App.vue'

@@ -70,7 +70,7 @@ const createGet = function (url, data) {
         .catch(reject.bind(this))
 }
 
-// 挂在
+// 挂载
 Object.defineProperties(Vue.prototype, {
     $post: {
         get () {

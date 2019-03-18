@@ -35,34 +35,6 @@ export default {
         user () {
             return this.$store.getters.user
         }
-    },
-    methods: {
-        async login () {
-            // const res = await this.$post('//localhost:8080/user/login', {
-            //     uid: 'Wilton'
-            // })
-            // this.socketConnect()
-        },
-
-        socketConnect () {
-            // const socket = new WebSocket('ws://localhost:8081/chat/single_chat')
-
-            // socket.addEventListener('open', (event) => {
-            //     socket.send("User logined!")
-            // })
-
-            // socket.addEventListener('message', (event) => {
-            //     console.log('A new Message:', event.data)
-            // })
-
-            // socket.addEventListener('close', (event) => {
-            //     console.log('Connect closed:', event.reason)
-            // })
-        }
-    },
-
-    mounted () {
-        this.login()
     }
 }
 </script>
@@ -104,7 +76,7 @@ export default {
         flex-grow: 0;
         width: 100%;
         height: 60px;
-        background-color: #1E9FFF;
+        background-color: #009688;
     }
     .main-wraper{
         flex-grow: 1;

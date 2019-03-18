@@ -21,7 +21,7 @@ export default {
     },
     data () {
         return {
-            messages: []
+            records: null
         }
     },
     computed: {
@@ -31,37 +31,22 @@ export default {
         user () {
             return this.$store.getters.user.uid
         },
-        receivedMsg () {
-            return this.$store.getters.msgReceiveCache.filter(each => 
-                [this.uid, this.user].includes(each.from)
-            ).map(each => {
-                return {
-                    type: each.type,
-                    info: {
-                        datetime: each.datetime,
-                        name: each.name,
-                        message: each.message
-                    }
-                }
-            })
-        },
         msgs () {
-            const messages = R.concat(this.messages)(this.receivedMsg)
-            const getDateTime = R.compose(R.prop('datetime'), R.prop('info'))
-            // 按照datetime属性排序
-            return R.sortBy(getDateTime)(messages)
+            const records = this.records || []
+            return R.concat(records || [])(this.$store.getters.messages || [])
         },
         msgSendCache () {
             return this.$store.getters.msgSendCache
         }
     },
-    created () {
-        this.$bus.$on('send-message', () => {
-            this.messages = R.append({
-                type: 1,
-                info: R.clone(this.msgSendCache)
-            })(this.messages)
-        })
+    methods: {
+        getChatRecords () {
+            const records = this.$cache.get(this.uid)
+            this.records = records
+        }
+    },
+    activated () {
+        this.getChatRecords()
     }
 }
 </script>

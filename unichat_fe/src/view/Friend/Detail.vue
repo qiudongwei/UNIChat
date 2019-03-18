@@ -6,7 +6,7 @@
         <div class="detail-wraper">
             <div class="detail-avatar">{{ avatar }}</div>
             <p class="detail-name">{{ frinedName }}</p>
-            <router-link class="detail-btn" :to="{name: 'CHAT_ROOM', params:{uid: 'd0177d5f5d938bbbb5c6dcd9917bc565'}}">发送消息</router-link>
+            <router-link class="detail-btn" :to="{name: 'CHAT_ROOM', params:{uid: uid}}">发送消息</router-link>
         </div>
     </div>
 </template>
@@ -28,7 +28,6 @@ export default {
     },
     watch: {
         uid () {
-            console.log('detail')
             this.getUserInfo()
         }
     },
@@ -44,6 +43,17 @@ export default {
                 this.frinedName = null
             }
         }
+    },
+
+    beforeRouteLeave (to, from, next) {
+        if(to.name === 'CHAT_ROOM') {
+            const chat = {
+                uid: this.uid,
+                uname: this.frinedName
+            }
+            this.$store.commit('setChat', chat)
+        }
+        next()
     },
 
     async activated () {
