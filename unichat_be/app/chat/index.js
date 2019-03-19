@@ -26,7 +26,7 @@ const createChatSocket = function (conf) {
             Object.assign(data, {
                 name: userInfo.username
             })
-            sockets[data.to].send(JSON.stringify(data))
+            sockets[data.to] && sockets[data.to].send(JSON.stringify(data))
         })
     })
 

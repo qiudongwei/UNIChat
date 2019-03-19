@@ -39,6 +39,12 @@ export default {
             return this.$store.getters.msgSendCache
         }
     },
+    watch: {
+        uid () {
+            this.records = null
+            this.getChatRecords()
+        }
+    },
     methods: {
         getChatRecords () {
             const records = this.$cache.get(this.uid)
@@ -46,6 +52,7 @@ export default {
         }
     },
     activated () {
+        console.log('chat area active...')
         this.getChatRecords()
     }
 }

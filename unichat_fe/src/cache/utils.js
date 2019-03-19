@@ -8,7 +8,7 @@ export const isObject = (obj) => {
 
 export const Obj2Node = (obj, model, keys) => {
     return new model(...keys
-        .map(each => obj[each]))
+        .map(each => obj[each] || null))
 }
 
 export const clone = (obj) => {
@@ -16,7 +16,7 @@ export const clone = (obj) => {
 }
 
 export const array2link = (arr, model, keys) => {
-    const head = new model()
+    let head = new model()
     let cursor = head
     arr.forEach(each => {
         const node = Obj2Node(each, model, keys)
@@ -24,7 +24,9 @@ export const array2link = (arr, model, keys) => {
         node.prev = cursor
         cursor = node
     })
-    return head.next
+    head = head.next
+    head && (head.prev = null)
+    return head
 }
 
 export const link2array = (head, keys) => {
@@ -37,4 +39,34 @@ export const link2array = (head, keys) => {
         head = head.next
     }
     return arr
+}
+
+export const sizeof = (str, charset) => {
+    let total = 0,
+        i, len, charCode
+    charset = charset ? charset.toLowerCase() : '';
+    if(charset === 'utf-16' || charset === 'utf16') {
+        for(i = 0, len = str.length; i < len; i++) {
+            charCode = str.charCodeAt(i)
+            if(charCode <= 0xffff){
+                total += 2;
+            }else{
+                total += 4;
+            }
+        }
+    } else {
+        for(i = 0, len = str.length; i < len; i++){
+            charCode = str.charCodeAt(i);
+            if(charCode <= 0x007f) {
+                total += 1;
+            }else if(charCode <= 0x07ff){
+                total += 2;
+            }else if(charCode <= 0xffff){
+                total += 3;
+            }else{
+                total += 4;
+            }
+        }
+    }
+    return total
 }

@@ -8,11 +8,11 @@ import Vue from 'vue'
 import { isObject, Obj2Node, clone, array2link, link2array } from './utils'
 
 class Node {
-    constructor (uid, uname, updatetime, records) {
+    constructor (uid, uname, frequency, updatetime, records) {
         this.uid = uid
         this.uname = uname
         this.updatetime = updatetime
-        this.frequency = 1
+        this.frequency = frequency || 1
         this.records = records
         this.prev = null
         this.next = null
@@ -22,6 +22,7 @@ class Node {
 
 class Cache {
     constructor () {
+        this.MAX_SIZE = 3 * 1024 * 1024 // 3M容量
         this.messages = JSON.parse(window.localStorage.getItem('MESSAGE')) || []
     }
 
@@ -43,30 +44,27 @@ class Cache {
     }
 
     set (uid, data) {
-        const keys = ['uid', 'uname', 'updatetime', 'records']
-        console.log('is?',this.isExit(uid))
+        const keys = ['uid', 'uname', 'frequency', 'updatetime', 'records']
         if(this.isExit(uid)) {
             const index = this.findIndex(uid)
             const message = this.messages[index]
             message.records = message.records.concat(data.records)
-            message.frequency ++
-        } else {
-            let linkList = array2link(this.messages, Node, keys)
-            const val = Object.assign({
-                uid: uid,
-                uname: data.name,
-                updatetime: new Date().getTime(),
-                records: data.records
-            })
-            const node = Obj2Node(val, Node, keys)
-            linkList = linkList || node
+            message.frequency++
+
+            let prevMessages = this.messages.slice(0, index)
+            const nextStart = -(this.messages.length - index) + 1
+            const nextMessages = nextStart >= 0 ? [] : this.messages.slice(nextStart)
+            let linkList = array2link(prevMessages, Node, keys)
+            const node = Obj2Node(message, Node, keys)
             let head = linkList
+            let tail = linkList
             while (head) {
                 if(head.frequency <= node.frequency) {
                     const prev = head.prev
-                    if(!prev) {
+                    if(!prev) { // 插入头节点
                         node.next = head
                         head.prev = node
+                        linkList = node
                     } else {
                         prev.next = node
                         node.prev = prev
@@ -74,10 +72,27 @@ class Cache {
                     }
                     break
                 }
+                tail = head // 遍历结束之后记录尾节点
                 head = head.next
             }
-            console.log(linkList)
-            this.messages = link2array(linkList, keys)
+            if(!tail) { // 遍历至尾节点，则插入尾部
+                linkList = node
+            } else if(!head) {
+                tail.next = node
+                node.prev = tail
+            }
+            tail = null
+            prevMessages = link2array(linkList, keys)
+            this.messages = prevMessages.concat(nextMessages)
+        } else {
+            const val = Object.assign({
+                uid: uid,
+                uname: data.name,
+                frequency: 1,
+                updatetime: new Date().getTime(),
+                records: data.records
+            })
+            this.messages.push(val)
         }
 
         this._uodateMessageCache(this.messages)
