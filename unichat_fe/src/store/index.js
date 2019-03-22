@@ -35,8 +35,6 @@ const store = new Vuex.Store({
 
     getters: {
         user: state => state.user,
-        msgSendCache: state => state.msgSendCache,
-        msgReceiveCache: state => state.msgReceiveCache,
         chat: state => state.chat,
         messages: state => state.messages
     }

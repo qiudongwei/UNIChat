@@ -55,8 +55,11 @@ export default {
     },
 
     watch: {
-        uid () {
-            this.getUserInfo()
+        uid (curr, prev) {
+            this.saveActiveUser()
+            this.saveChatRecord(prev, this.$cache.getActiveUser().uname)
+            this.saveActiveUser()
+            this.$store.commit('setMessage', null)
         }
     },
 
@@ -93,11 +96,11 @@ export default {
             this.$store.commit('setChat', null)
             this.$cache.clearActiveUser()
         },
-        saveChatRecord () {
+        saveChatRecord (uid, uname) {
             const messages = this.$store.getters.messages || []
             if(!messages.length) return
-            this.$cache.set(this.uid, {
-                name: this.frinedName,
+            this.$cache.set(uid || this.uid, {
+                name: uname || this.frinedName,
                 records: messages
             })
         },

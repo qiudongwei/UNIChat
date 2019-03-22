@@ -29,7 +29,7 @@
 </template>
 
 <script>
-import * as R from 'ramda'
+import { concat } from 'ramda'
 import { getAvatar } from '@/js/utils'
 export default {
     data () {
@@ -57,15 +57,19 @@ export default {
         chats () {
             const chat = this.chat ? [this.chat] : []
             const chatList = this.chatList || []
-            return R.concat(chat)(chatList.map(each => {
-                const date = new Date(each.data.info.datetime)
-                return {
-                    uid: each.uid,
-                    uname: each.uname,
-                    latestMsg: each.data.info.message,
-                    latestTime: (Date.now() - each.data.info.datetime) > 24 * 12 * 60 * 60 * 100 ? date.toLocaleDateString() : date.toLocaleTimeString()
-                }
-            }))
+            return concat(chat)(
+                    chatList
+                    .filter(each => !this.chat || (this.chat && each.uid !== this.chat.uid))
+                    .map(each => {
+                        const date = new Date(each.data.info.datetime)
+                        return {
+                            uid: each.uid,
+                            uname: each.uname,
+                            latestMsg: each.data.info.message,
+                            latestTime: (Date.now() - each.data.info.datetime) > 24 * 12 * 60 * 60 * 100 ? date.toLocaleDateString() : date.toLocaleTimeString()
+                        }
+                    })
+                )
         }
     },
 

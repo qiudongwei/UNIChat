@@ -22,7 +22,7 @@ class Node {
 
 class Cache {
     constructor () {
-        this._MAX_SIZE = 1024 // 3M容量
+        this._MAX_SIZE = 3 * 1024 * 1024 // 3M容量
         this._remain_size = 0
         this.messages = JSON.parse(window.localStorage.getItem('MESSAGE')) || []
         this._calculateSize()
@@ -108,7 +108,7 @@ class Cache {
         this._uodateMessageCache()
     }
 
-    _uodateMessageCache (messages) {
+    _uodateMessageCache () {
         window.localStorage.setItem('MESSAGE', JSON.stringify(this.messages))
         this._calculateSize()
     }
@@ -147,7 +147,6 @@ class Cache {
     }
 
     _willOverflow (val, key) {
-        console.log(val)
         let data = null
         if(key) { // 新数据
             data = Object.assign({
@@ -160,9 +159,7 @@ class Cache {
         } else {
             data = val.records
         }
-        console.log(data)
         const dataSize = sizeof(JSON.stringify(data || ''))
-        console.log(this._remain_size, dataSize)
         return this._remain_size < dataSize && (dataSize - this._remain_size)
     }
 
