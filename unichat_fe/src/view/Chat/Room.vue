@@ -51,20 +51,23 @@ export default {
 
         avatar () {
             return getAvatar && getAvatar(this.frinedName)
+        },
+
+        chat () {
+            return this.$store.getters.chat
         }
     },
 
     watch: {
         uid (curr, prev) {
-            this.saveActiveUser()
-            this.saveChatRecord(prev, this.$cache.getActiveUser().uname)
-            this.saveActiveUser()
+            this.saveChatRecord(prev, this.chat.uname)
+            this.getUserInfo()
             this.$store.commit('setMessage', null)
         }
     },
 
     created () { // 页面刷新时从缓存中获取激活用户
-        const friend = this.$cache.getActiveUser()
+        const friend = this.$userCache.get('active')
         if(friend) {
             this.$store.commit('setChat', friend)
         }
@@ -83,6 +86,7 @@ export default {
             if(frined.result === 1) {
                 this.frinedName = frined.data.username
             }
+            this.saveActiveUser()
         },
         saveActiveUser () {
             // 保存激活中的用户
@@ -90,17 +94,19 @@ export default {
                 uid: this.uid,
                 uname: this.frinedName
             }
-            this.$cache.setActiveUser(chat)
+            this.$store.commit('setChat', chat)
+            this.$userCache.set('active', chat)
         },
         clearActiveUser () {
             this.$store.commit('setChat', null)
-            this.$cache.clearActiveUser()
+            this.$userCache.remove('active')
         },
         saveChatRecord (uid, uname) {
             const messages = this.$store.getters.messages || []
             if(!messages.length) return
-            this.$cache.set(uid || this.uid, {
-                name: uname || this.frinedName,
+            this.$msgCache.set(uid || this.uid, {
+                uid: this.uid,
+                uname: uname || this.frinedName,
                 records: messages
             })
         },

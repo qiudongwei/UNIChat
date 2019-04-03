@@ -42,6 +42,7 @@ export const link2array = (head, keys) => {
 }
 
 export const sizeof = (str, charset) => {
+    if(!str) return 0
     let total = 0,
         i, len, charCode
     charset = charset ? charset.toLowerCase() : '';
@@ -69,4 +70,8 @@ export const sizeof = (str, charset) => {
         }
     }
     return total
+}
+
+export const arrayKeys = (obj) => {
+    return Object.keys(obj).filter((key) => Array.isArray(obj[key]))
 }

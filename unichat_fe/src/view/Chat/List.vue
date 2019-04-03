@@ -29,7 +29,7 @@
 </template>
 
 <script>
-import { concat } from 'ramda'
+import { concat, last } from 'ramda'
 import { getAvatar } from '@/js/utils'
 export default {
     data () {
@@ -61,12 +61,13 @@ export default {
                     chatList
                     .filter(each => !this.chat || (this.chat && each.uid !== this.chat.uid))
                     .map(each => {
-                        const date = new Date(each.data.info.datetime)
+                        const msg = last(each.records)
+                        const date = new Date(msg.info.datetime)
                         return {
                             uid: each.uid,
                             uname: each.uname,
-                            latestMsg: each.data.info.message,
-                            latestTime: (Date.now() - each.data.info.datetime) > 24 * 12 * 60 * 60 * 100 ? date.toLocaleDateString() : date.toLocaleTimeString()
+                            latestMsg: msg.info.message,
+                            latestTime: (Date.now() - msg.info.datetime) > 24 * 12 * 60 * 60 * 100 ? date.toLocaleDateString() : date.toLocaleTimeString()
                         }
                     })
                 )
@@ -89,14 +90,13 @@ export default {
         getAvatar: getAvatar,
 
         getChatList () {
-            this.chatList = this.$cache.getChatList('MESSAGE')
+            this.chatList = this.$msgCache.all()
         }
     },
 
     beforeRouteEnter (to, from, next) {
         next(vm => {
             vm.getChatList()
-            // vm.chatList = vm.$cache.getChatList('MESSAGE')
         })
     }
 }

@@ -21,7 +21,7 @@ export default {
     },
     data () {
         return {
-            records: null
+            messages: {}
         }
     },
     computed: {
@@ -32,8 +32,8 @@ export default {
             return this.$store.getters.user.uid
         },
         msgs () {
-            const records = this.records || []
-            return R.concat(records || [])(this.$store.getters.messages || [])
+            const messages = this.messages.records || []
+            return R.concat(messages || [])(this.$store.getters.messages || [])
         },
         msgSendCache () {
             return this.$store.getters.msgSendCache
@@ -41,18 +41,17 @@ export default {
     },
     watch: {
         uid () {
-            this.records = null
+            this.messages = null
             this.getChatRecords()
         }
     },
     methods: {
         getChatRecords () {
-            const records = this.$cache.get(this.uid)
-            this.records = records
+            const messages = this.$msgCache.get(this.uid) || {}
+            this.messages = messages
         }
     },
     activated () {
-        console.log('chat area active...')
         this.getChatRecords()
     }
 }
