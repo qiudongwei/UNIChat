@@ -2,39 +2,96 @@
  * LFU(最近最久未使用)缓存系统
  */
 
-import { arrayKeys, sizeof, clone, arr2Obj } from './utils'
+import { sizeof, clone, arr2Obj, warn } from './utils'
+import Pubsub from './pubsub'
 
 class LFUCache {
-    constructor (nameSpace, maxSize) {
+    constructor (nameSpace) {
         this.$nameSpace = nameSpace
-        this.$maxSize = maxSize || 3 * 1024 * 1024 // 3MB
+        this.pubsub = new Pubsub()
         this._initCache()
         this._calculateRemainSize()
     }
 
+    get SIZE () {
+        return 4 * 1024 *1024 // 4MB
+    }
+
+    get MAX () {
+        return 50
+    }
+
+    get _EVENT () {
+        return new Set(['expire', 'set', 'remove', 'clear'])
+    }
+
     nameSpace (nameSpace) {
+        if(!nameSpace) {
+            warn('LFUCache: namespace should not empty.')
+            return
+        }
         this.$nameSpace = nameSpace
         this._initCache()
         return this
     }
 
-    size (maxSize) {
-        this.$maxSize = maxSize
+    max (num) {
+        this.$max = num || this.MAX
         return this
+    }
+
+    size (size) {
+        this.$size = size || this.SIZE
+        return this
+    }
+
+    expire (secs) {
+        if(this.$nameSpace){
+            warn('LFUCache: Please set namespace first.')
+            return
+        }
+        this.$expire = secs || 7 * 24 * 60 * 60
+        const lfuExpire = JSON.parse(window.localStorage.getItem('LFUCACHE_EXPIRE') || '{}')
+        lfuExpire[this.$nameSpace] = Date.now()
+        window.localStorage.setItem('LFUCACHE_EXPIRE', JSON.stringify(lfuExpire))
+    }
+
+    getSize () {
+        return this.$size
+    }
+
+    getMax () {
+        return this.$max
+    }
+
+    getNameSpace () {
+        return this.$nameSpace
+    }
+
+    getRemainSize () {
+        return this.$remainSize
+    }
+
+    getExpire () {
+        return this.$expire
     }
 
     set (key, data) {
         data = clone(data)
         let weight = 1
-        const lack = this._willOverflow(key, data)
-        if(lack) { // 判断溢出，执行删除
-            const { id } = this._delete(lack)
-            if(id === key) {
-                data = this._clearArrData(data)
-            }
-        }
-        if(this._isExit(key)) { // 先更新
+        if(this.has(key)) { // 先更新
             weight = this._find(key)._weight + 1
+        }
+        const { max, size } = this._isOverflow(key, data)
+        if(size === -1) {
+            warn(`LFUCache: exceed maxsize, store ${key} failed.`)
+            return this
+        } else if(!max || size) {
+            const del = this._delete(max, size, key)
+            if(!del) {
+                warn(`LFUCache: exceed maxsize, store ${key} failed.`)
+                return this
+            }
         }
         const val = Object.assign({
             _id: key,
@@ -67,7 +124,11 @@ class LFUCache {
         return ret
     }
 
-    all () {
+    keys () {
+        return Object.keys(this.$cache)
+    }
+
+    values () {
         const exclude = new Set(['_id', '_weight', '_lastmodify'])
         return Object.values(this.$cache)
                      .sort((a, b) => b._weight - a._weight)
@@ -80,144 +141,98 @@ class LFUCache {
                      )
     }
 
+    entries () {
+        const exclude = new Set(['_id', '_weight', '_lastmodify'])
+        return Object.entries(
+                    Object.values(this.$cache)
+                    .sort((a, b) => b._weight - a._weight)
+                    .reduce((acc, curr) => {
+                        acc[curr._id] = Object.keys(curr)
+                            .filter(key => !exclude.has(key))
+                            .reduce((accer, key) => {
+                                accer[key] = curr[key]
+                                return accer
+                            }, {})
+                        return acc
+                    }, {})
+                )
+    }
+
+    on (evt, cb) {
+        if(!this._EVENT.has(evt) || typeof cd !== 'function') return
+        this.pubsub.subscribe(evt, cb)
+    }
+
+    off (token) {
+        this.pubsub.unsubscribe(token)
+    }
+
+    has (key) {
+        return Reflect.has(this.$cache, key)
+    }
+
     clear () {
         window.localStorage.removeItem(this.$nameSpace)
-    }
-
-    getSize () {
-        return this.$maxSize
-    }
-
-    getNameSpace () {
-        return this.$nameSpace
-    }
-
-    getRemainSize () {
-        return this.$remainSize
+        return this
     }
 
     _initCache () {
+        this.$max = this.MAX
+        this.$size = this.SIZE
+        if(this._isExpire()) {
+            this.clear()
+        }
         this.$cache = JSON.parse(window.localStorage.getItem(this.$nameSpace)) || {}
+        this._amount = this.keys().length
     }
 
     _find (key) {
         return Reflect.get(this.$cache, key)
     }
 
-    _isExit (key) {
-        return Reflect.has(this.$cache, key)
-    }
-
-    _delete(size) {
-        let position = 0
+    _delete(max, size, id) {
         let delArr = null
         let delSize = 0
+        const delKeys = []
         const emptyObjSize = sizeof(JSON.stringify({}))
-        const cacheArr = Object.values(this.$cache).sort((a, b) => a._weight - b._weight)
+        const cacheArr = Object.values(this.$cache)
+                               .sort((a, b) => a._weight - b._weight)
+                               .filter(each => each._id !== id)
         const len = cacheArr.length
-        for(let i = 0; i < len; i++) {
+        let i = !max ? 1 : 0 // 超过数量限制，将第一个剔除
+        let position = i
+        for(; i < len; i++) {
+            delKeys.push(cacheArr[i]._id)
             delArr = cacheArr.slice(0, i + 1)
             delSize = sizeof(JSON.stringify(arr2Obj(delArr))) - emptyObjSize
             position = i
-            if(delSize === size) {
-                deltotal += delSize
+            if(delSize >= size) {
                 size = 0
                 break
-            } else if(delSize > size) {
-                delArr.pop()
-                if(delArr.length) {
-                    size = size - sizeof(JSON.stringify(arr2Obj(delArr))) + emptyObjSize
-                }
-                break
             }
         }
+        if(size) return false
 
-        let remainArr = cacheArr.slice(position + 1, len)
-        let isEnough = false
-        if(size) {
-            const { data, lack } = this._delArrData(cacheArr[position], size)
-            if(lack === 0) {
-                cacheArr[position] = data
-                isEnough = true
-            }
-            size = lack
-        }
-        if(isEnough) {
-            remainArr = cacheArr.slice(position, len)
-        } else {
-            const { data } = this._delArrData(remainArr[0], size)
-            if(data){
-                remainArr[0] = data
-            } else {
-                remainArr.shift()
-            }
-
-        }
+        const remainArr = cacheArr.slice(position + 1, len)
         const cache = remainArr.reduce((acc, curr) => {
             acc[curr._id] = curr
             return acc
         }, {})
         this.$cache = cache
-        return { 
-            id: remainArr[0] ? remainArr[0]._id : null,
-        }
-    }
-
-    _delArrData (origin, size) {
-        const data = clone(origin)
-        const keys = arrayKeys(data)
-        let lack = size
-        if(!keys.length) return { data: null, lack}
-        const emptyArrSize = sizeof(JSON.stringify([]))
-        let j = 0
-        for(; j < keys.length; j++) {
-            const key = keys[j]
-            const arr = Reflect.get(data, key)
-            let cursor = 0
-            let isEnough = false
-            arr.some((each, index, arr) => {
-                cursor = index + 1
-                if(sizeof(JSON.stringify(arr.slice(0, cursor))) - emptyArrSize >= lack) {
-                    isEnough = true
-                    return true
-                }
-                return false
-            })
-            if(isEnough) {
-                lack = 0
-                Reflect.set(data, key, arr.splice(cursor))
-                break
-            } else {
-                lack -= sizeof(JSON.stringify(arr)) - emptyArrSize
-                Reflect.set(data, key, [])
-            }
-        }
-        if(j === keys.length && !lack) data = null
-        return { data, lack }
-    }
-
-    _clearArrData (origin) {
-        const data = clone(origin)
-        const keys = arrayKeys(data)
-        if(keys.length === 0) return
-        const val = this._find(data._id)
-        keys.forEach((each) => {
-            const l1 = data[each].length
-            const l2 = val[each].length
-            if(l1 > l2) {
-                data[each] = val[each].concat(data[each].slice(l1 - l2))
-            }
-        })
-        return data
+        return delKeys
     }
 
     _update () {
         window.localStorage.setItem(this.$nameSpace, JSON.stringify(this.$cache))
+        this._amount = this.keys().length
         this._calculateRemainSize()
     }
 
-    _willOverflow (key, data) {
+    _isOverflow (key, data) {
         let valSize = 0
+        let max = this._amount - (this.$max || -1)
+        let size = 0
+        
         const val = this._find(key)
         const lfuData = Object.assign({
             _id: key,
@@ -230,32 +245,26 @@ class LFUCache {
             valSize = sizeof(JSON.stringify(temp))
         } else {
             const diff = sizeof(JSON.stringify(val)) - sizeof(JSON.stringify(lfuData))
-            valSize = diff > 0 ? 0 : this._calculateArrSize(lfuData, val)
+            valSize = diff > 0 ? 0 : Math.abs(diff)
         }
-        console.log(this.$nameSpace, this.$remainSize, valSize)
-        return this.$remainSize < valSize && (valSize - this.$remainSize)
+        if(valSize > this.$size) {
+            size = -1
+        } else if(valSize > this.$remainSize) {
+            size = valSize - this.$remainSize
+        }
+        return { max, size }
     }
 
-    // 目标数据需要源数据腾出的空间
-    _calculateArrSize (target, origin) {
-        const tKeys = arrayKeys(target)
-        const oKeys = arrayKeys(origin)
-        const dKeys = oKeys.filter(each => !tKeys.includes(each))
-        const emptyObjSize = sizeof(JSON.stringify({}))
-        let total = dKeys.reduce((acc, curr) => {
-            const item = {}
-            item[curr] = origin[curr]
-            acc += sizeof(JSON.stringify(item)) - emptyObjSize, acc
-        }, 0)
-        total -= tKeys.reduce((acc, curr) => {
-            const l1 = target[curr].length
-            const l2 = origin[curr] ? origin[curr].length : 0
-            if(l1 > l2) {}
-        }, 0)
+    _isExpire () {
+        const _expire = JSON.parse(window.localStorage.getItem('LFUCACHE_EXPIRE'))
+        _expire = _expire ? _expire[this.$nameSpace] : null
+        if(!_expire) return false
+        const now = Date.now()
+        return  now > (_expire + this.$expire * 1000)
     }
 
     _calculateRemainSize () {
-        this.$remainSize = this.$maxSize - sizeof(window.localStorage.getItem(this.$nameSpace || ''))
+        this.$remainSize = this.$size - sizeof(window.localStorage.getItem(this.$nameSpace || ''))
     }
 }
 

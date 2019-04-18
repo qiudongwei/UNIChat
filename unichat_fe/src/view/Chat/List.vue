@@ -90,7 +90,7 @@ export default {
         getAvatar: getAvatar,
 
         getChatList () {
-            this.chatList = this.$msgCache.all()
+            this.chatList = this.$msgCache.values()
         }
     },
 
