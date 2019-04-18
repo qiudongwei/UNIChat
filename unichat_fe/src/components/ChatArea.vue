@@ -13,8 +13,8 @@
 </template>
 
 <script>
+import { concat, reverse } from 'ramda'
 import Message from '@/components/Message'
-import * as R from 'ramda'
 export default {
     components: {
         Message
@@ -33,7 +33,7 @@ export default {
         },
         msgs () {
             const messages = this.messages.records || []
-            return R.concat(messages || [])(this.$store.getters.messages || [])
+            return concat(messages, this.$store.getters.messages || [])
         },
         msgSendCache () {
             return this.$store.getters.msgSendCache
@@ -49,6 +49,10 @@ export default {
         getChatRecords () {
             const messages = this.$msgCache.get(this.uid) || {}
             this.messages = messages
+            this.$store.commit('setHistoryMessage', {
+                uid: this.uid, 
+                messages: messages ? messages.records : []
+            })
         }
     },
     activated () {

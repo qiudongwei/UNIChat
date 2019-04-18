@@ -28,6 +28,7 @@
 </template>
 
 <script>
+import { lensPath, view, concat } from 'ramda'
 import { getAvatar } from '@/js/utils'
 import MessageArea from '@/components/MessageArea'
 import ChatArea from '@/components/ChatArea'
@@ -102,12 +103,15 @@ export default {
             this.$userCache.remove('active')
         },
         saveChatRecord (uid, uname) {
-            const messages = this.$store.getters.messages || []
+            const msgLens = lensPath(['$store', 'getters', 'messages'])
+            const messages = view(msgLens, this) || []
+            const hisLens = lensPath(['$store', 'getters', 'historyMessage', uid || this.uid])
+            const history = view(hisLens, this)
             if(!messages.length) return
             this.$msgCache.set(uid || this.uid, {
                 uid: this.uid,
                 uname: uname || this.frinedName,
-                records: messages
+                records: concat(history, messages)
             })
         },
         beforeunload () {

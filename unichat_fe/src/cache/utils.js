@@ -41,6 +41,13 @@ export const link2array = (head, keys) => {
     return arr
 }
 
+export const arr2Obj = (arr) => {
+    return arr.reduce((acc, curr) => (
+        acc[curr._id] = curr,acc
+    )
+    , {})
+}
+
 export const sizeof = (str, charset) => {
     if(!str) return 0
     let total = 0,

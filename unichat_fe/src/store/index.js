@@ -12,6 +12,7 @@ const store = new Vuex.Store({
         user: window.sessionStorage.user ? JSON.parse(window.sessionStorage.user) : null,
         chat: null, // 当前聊天好友ID
         messages: null, // 缓存聊天记录
+        historyMessage: {} // 历史聊天记录
     },
 
     mutations: {
@@ -24,6 +25,9 @@ const store = new Vuex.Store({
         },
         setMessage (state, messages) {
             state.messages = messages
+        },
+        setHistoryMessage (state, { uid, messages }) {
+            Reflect.set(state.historyMessage, uid, messages || [])
         }
     },
 
@@ -36,7 +40,8 @@ const store = new Vuex.Store({
     getters: {
         user: state => state.user,
         chat: state => state.chat,
-        messages: state => state.messages
+        messages: state => state.messages,
+        historyMessage: state => state.historyMessage
     }
 })
 

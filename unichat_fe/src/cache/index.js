@@ -7,15 +7,17 @@
 import Vue from 'vue'
 import LFUCache from './LFUCache'
 
+const msgCache = new LFUCache('MESSAGE', 600)
+const userCache = new LFUCache('ACTIVE_USER', 200)
 Object.defineProperties(Vue.prototype, {
     $msgCache: {
         get () {
-            return new LFUCache('MESSAGE', 1024)
+            return msgCache
         }
     },
     $userCache: {
         get () {
-            return new LFUCache('ACTIVE_USER', 100)
+            return userCache
         }
     }
 })

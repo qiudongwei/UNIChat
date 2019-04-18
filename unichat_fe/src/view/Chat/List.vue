@@ -59,7 +59,7 @@ export default {
             const chatList = this.chatList || []
             return concat(chat)(
                     chatList
-                    .filter(each => !this.chat || (this.chat && each.uid !== this.chat.uid))
+                    .filter(each => (!this.chat || (this.chat && each.uid !== this.chat.uid)) && each.records.length !== 0)
                     .map(each => {
                         const msg = last(each.records)
                         const date = new Date(msg.info.datetime)
