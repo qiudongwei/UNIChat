@@ -8,7 +8,8 @@ import Pubsub from './pubsub'
 class LFUCache {
     constructor (nameSpace) {
         this.$nameSpace = nameSpace
-        this.pubsub = new Pubsub()
+        this._pubsub = new Pubsub()
+        this._evtToken = new Map
         this._initCache()
         this._calculateRemainSize()
     }
@@ -46,14 +47,17 @@ class LFUCache {
     }
 
     expire (secs) {
-        if(this.$nameSpace){
+        if(!this.$nameSpace){
             warn('LFUCache: Please set namespace first.')
             return
         }
         this.$expire = secs || 7 * 24 * 60 * 60
         const lfuExpire = JSON.parse(window.localStorage.getItem('LFUCACHE_EXPIRE') || '{}')
-        lfuExpire[this.$nameSpace] = Date.now()
-        window.localStorage.setItem('LFUCACHE_EXPIRE', JSON.stringify(lfuExpire))
+        if(!lfuExpire[this.$nameSpace]) {
+            lfuExpire[this.$nameSpace] = Date.now()
+            window.localStorage.setItem('LFUCACHE_EXPIRE', JSON.stringify(lfuExpire))
+        }
+        return this
     }
 
     getSize () {
@@ -100,11 +104,12 @@ class LFUCache {
         }, data)
         this.$cache[key] = val
         this._update()
-        console.log(this.$nameSpace, this.$remainSize)
+        this._pubsub.publish('set', key)
         return this
     }
 
     get (key) {
+        this._delExpire()
         const exclude = new Set(['_id', '_weight', '_lastmodify'])
         const val = Reflect.get(this.$cache, key)
         return val ? Object.keys(val)
@@ -120,15 +125,18 @@ class LFUCache {
         const ret = Reflect.deleteProperty(this.$cache, key)
         if(ret) {
             this._update()
+            this._pubsub.publish('remove', key)
         }
         return ret
     }
 
     keys () {
+        this._delExpire()
         return Object.keys(this.$cache)
     }
 
     values () {
+        this._delExpire()
         const exclude = new Set(['_id', '_weight', '_lastmodify'])
         return Object.values(this.$cache)
                      .sort((a, b) => b._weight - a._weight)
@@ -142,6 +150,7 @@ class LFUCache {
     }
 
     entries () {
+        this._delExpire()
         const exclude = new Set(['_id', '_weight', '_lastmodify'])
         return Object.entries(
                     Object.values(this.$cache)
@@ -159,12 +168,17 @@ class LFUCache {
     }
 
     on (evt, cb) {
-        if(!this._EVENT.has(evt) || typeof cd !== 'function') return
-        this.pubsub.subscribe(evt, cb)
+        if(!this._EVENT.has(evt) || typeof cb !== 'function') return this
+        const token = this._pubsub.subscribe(evt, cb)
+        this._evtToken.set(evt, token)
+        return this
     }
 
-    off (token) {
-        this.pubsub.unsubscribe(token)
+    off (evt) {
+        if(!this._EVENT.has(evt) || !this._evtToken.has(evt)) return this
+        const token = this._evtToken.get(evt)
+        this._pubsub.unsubscribe(token)
+        return this
     }
 
     has (key) {
@@ -172,17 +186,19 @@ class LFUCache {
     }
 
     clear () {
+        this.$cache = Object.create(null)
         window.localStorage.removeItem(this.$nameSpace)
+        if(!this._isExpire()) {
+            this._pubsub.publish('clear', this.$nameSpace)
+        }
         return this
     }
 
     _initCache () {
         this.$max = this.MAX
         this.$size = this.SIZE
-        if(this._isExpire()) {
-            this.clear()
-        }
-        this.$cache = JSON.parse(window.localStorage.getItem(this.$nameSpace)) || {}
+        this._delExpire()
+        this.$cache = JSON.parse(window.localStorage.getItem(this.$nameSpace)) || Object.create(null)
         this._amount = this.keys().length
     }
 
@@ -222,10 +238,25 @@ class LFUCache {
         return delKeys
     }
 
+    _delExpire () {
+        if(this._isExpire()) {
+            this._pubsub.publish('expire', this.$nameSpace)
+            this._pubsub.unsubscribe('expire')
+            this._updateLfuExpire()
+            this.clear()
+        }
+    }
+
     _update () {
         window.localStorage.setItem(this.$nameSpace, JSON.stringify(this.$cache))
         this._amount = this.keys().length
         this._calculateRemainSize()
+    }
+
+    _updateLfuExpire () {
+        const _expire = JSON.parse(window.localStorage.getItem('LFUCACHE_EXPIRE'))
+        Reflect.deleteProperty(_expire, this.$nameSpace)
+        window.localStorage.setItem('LFUCACHE_EXPIRE', JSON.stringify(_expire))
     }
 
     _isOverflow (key, data) {
@@ -256,7 +287,7 @@ class LFUCache {
     }
 
     _isExpire () {
-        const _expire = JSON.parse(window.localStorage.getItem('LFUCACHE_EXPIRE'))
+        let _expire = JSON.parse(window.localStorage.getItem('LFUCACHE_EXPIRE'))
         _expire = _expire ? _expire[this.$nameSpace] : null
         if(!_expire) return false
         const now = Date.now()

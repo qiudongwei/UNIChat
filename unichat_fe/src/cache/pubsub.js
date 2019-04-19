@@ -17,7 +17,7 @@ class Pubsub {
 		let len = subscribers ? subscribers.length : 0
 
 		while(len--) {
-			subscribers[len].func(topic, args)
+			subscribers[len].func(args)
 		}
 
 		return this
@@ -38,6 +38,7 @@ class Pubsub {
 
 	// 取消订阅
 	unsubscribe (token) {
+		const topics = this.topics
 		for (let key in topics) {
             if(topics[key].some(each => each.token != token)) continue
             topics[key] = topics[key].filter(each => each.token !== token)
