@@ -7,7 +7,9 @@
       <div class="login-wraper">
         <h2 class="login-slogan">Welcome to UNIChat</h2>
         <NicknameInput v-model="nickName" placeholder="输入昵称/登录即注册" />
-        <button class="login-btn" @click="login">登录</button>
+        <Debounce include="click" time="500">
+          <button class="login-btn" @click="login">登录</button>
+        </Debounce>
       </div>
   </div>
 </template>
@@ -26,6 +28,8 @@ export default {
   methods: {
     async login () {
       if (!this.nickName) return
+      console.log(this.nickName)
+      return
       const res = await this.$post('//localhost:8080/user/login', {
           username: this.nickName
       })
