@@ -11,7 +11,12 @@ const debounce = (func, delay, before) => {
       }
       before && before.call(this)
       timer = window.setTimeout(async () => {
-          await func.call(this, arg)
+          if(!Array.isArray(func)) {
+            func = [func]
+          }
+          for(let i in func) {
+            await func[i].call(this, arg)
+          }
           timer = null
       }, delay)
   }
@@ -28,32 +33,63 @@ const match = (pattern, name) => {
   return false
 }
 
+const pruneDebounce = (vm, filter) => {
+  const { debounceMap, originMap, __vnode } = vm
+  Object.keys(debounceMap).filter(!filter).forEach((each) => {
+      Reflect.deleteProperty(debounceMap, each)
+      Reflect.set(__vnode.data.on, each, originMap[each])
+  })
+}
+
 export default {
   name: 'Debounce',
   abstract: true,
   props: {
     include: [Array, String, RegExp],
     exclude: [Array, String, RegExp],
-    time: [String, Number]
+    time: [String, Number],
+    before: Function
   },
   created () {
+    this.originMap = new Map
     this.debounceMap = new Map
+    this.default = new Set
+    this.__vnode = null
   },
+  mounted () {
+    this.$watch('include', val => { // 监听include参数变化，实时更新防抖函数
+        pruneDebounce(this, name => matchs(val, name))
+    })
+    this.$watch('exclude', val => {
+        pruneDebounce(this, name => !matchs(val, name))
+    })
+},
   destroyed () {
-    this.debounceMap = Object.create(null)
+    this.originMap = new Map
+    this.debounceMap = new Map
+    this.default = new Set
+    this.__vnode = null
   },
   render () {
-    const vnode = this.$slots.default[0] || null
+    const vnode = this.$slots.default[0] || Object.create(null)
+    this.__vnode = vnode
+    if(vnode.tag === 'input') {
+      this.default.add('input')
+    } else if(vnode.tag === 'button') {
+      this.default.add('click')
+    }
     const { include, exclude, time } = this
     const evts = Object.keys(vnode.data.on)
     const timer = parseInt(time)
     evts.forEach((each) => {
       if(
-        (include && match(include, each)) ||
-        (exclude && !match(exclude, each))
+        (include && match(include, each))
+        || (exclude && !match(exclude, each))
+        || (!match(exclude, each) && this.default.has(each))
       ) {
-        this.debounceMap[each] = debounce.call(vnode, vnode.data.on[each], timer)
-        vnode.data.on[each] = this.debounceMap[each]
+        this.originMap.set(each, vnode.data.on[each])
+        this.debounceMap.set(each, debounce.call(vnode, vnode.data.on[each], timer, this.before))
+        vnode.data.on[each] = this.debounceMap.get(each)
       }
     })
     return vnode

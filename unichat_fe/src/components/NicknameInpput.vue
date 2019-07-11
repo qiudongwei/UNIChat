@@ -4,9 +4,12 @@
 
 <template>
   <div class="input-wraper">
-    <input type="text" ref="input" class="common-input"
-         v-model="model"
-         v-bind="$attrs">
+    <Throttle time="1000" :before="before">
+      <input type="text" ref="input" class="common-input"
+          v-model="model"
+          @input = "myinput"
+          v-bind="$attrs">
+    </Throttle>
   </div>
 </template>
 
@@ -24,16 +27,21 @@ export default {
 
       set (val) {
         this.$emit('input', val)
-        if(val) {
-          this.checkNickName()
-        }
       }
     }
   },
   methods: {
     checkNickName: debounce(function () {
       console.log('Checking unique NickName: ',this.model)
-    }, 500)
+    }, 500),
+
+    myinput (val) {
+      console.log(val.target.value)
+    },
+
+    before () {
+      console.log('before...')
+    }
   }
 }
 </script>

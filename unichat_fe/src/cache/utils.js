@@ -82,3 +82,7 @@ export const sizeof = (str, charset) => {
 export const arrayKeys = (obj) => {
     return Object.keys(obj).filter((key) => Array.isArray(obj[key]))
 }
+
+export const warn = (str) => {
+    console.warn(str)
+}
