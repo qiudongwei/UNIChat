@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "lfustorage": "^1.1.0",
     "qs": "^6.6.0",
     "ramda": "^0.26.1",
     "vue": "^2.6.6",

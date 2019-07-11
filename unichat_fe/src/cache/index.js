@@ -5,23 +5,23 @@
  */
 
 import Vue from 'vue'
-import LFUCache from './LFUCache'
+import LFUStorage from 'lfustorage'
 
-const msgCache = new LFUCache('MESSAGE').size(700).expire(2*60)
+const msgCache = new LFUStorage('MESSAGE').max(1).expire(7* 24 * 60 * 60)
 msgCache.on('set', (key) => {
     console.log(`set ${key} in ${msgCache.$nameSpace}`)
 })
 msgCache.on('remove', (key) => {
     console.log(`remove ${key} in ${msgCache.$nameSpace}`)
 })
-msgCache.on('expire', (namespace) => {
-    console.log(`${namespace} is expired.`)
+msgCache.on('overflow', (res) => {
+    console.log('overflow: ', res)
 })
 msgCache.on('clear', (namespace) => {
     console.log(`${namespace} is clear.`)
 })
-console.log(msgCache.get('d0177d5f5d938bbbb5c6dcd9917bc565'))
-const userCache = new LFUCache('ACTIVE_USER').size(200)
+
+const userCache = new LFUStorage('ACTIVE_USER').size(200)
 Object.defineProperties(Vue.prototype, {
     $msgCache: {
         get () {
