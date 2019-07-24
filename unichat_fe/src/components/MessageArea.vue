@@ -170,7 +170,6 @@ export default {
             $chatEle.addEventListener('drop', (e) => {
                 console.log('drop')
                 e.preventDefault()
-                console.log(e.dataTransfer.getData('text'))
                 const files = e.dataTransfer.files || []
                 if(files.length) {
                     const { name, size } = files[0]
