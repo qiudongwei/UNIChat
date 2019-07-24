@@ -18,7 +18,7 @@ const axios = Axios.create({
 Axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
 const CODE = new Map()
-CODE.set(101, '用户名错误')
+CODE.set(101, '权限错误，请联系管理员！')
     .set('default', '未知错误编码')
 
 // 定义拦截器
@@ -27,8 +27,8 @@ const interceptors = function (judgeCode) {
         if (judgeCode) { // 处理错误代码
             const code = respone.data.code
             if(code % 100) { // 非整百则表示出错
-                const code = [...CODE.keys()].includes(code) ? code : 'default'
-                reject(CODE.get(code))
+                const codeVal = [...CODE.keys()].includes(code) ? code : 'default'
+                return Promise.reject(CODE.get(codeVal))
             }
         }
         return respone.data
