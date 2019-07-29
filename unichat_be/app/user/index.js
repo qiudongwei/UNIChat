@@ -13,7 +13,7 @@ router.post('/login', (req, res) => {
     const data = doLogin(tmp)
     res.json({
         result: 1,
-        code: 101,
+        code: 100,
         data: data
     })
 })
